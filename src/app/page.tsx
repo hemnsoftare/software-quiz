@@ -1,27 +1,47 @@
 "use client";
-import { db } from "@/config/firebase";
+import { database } from "@/config/firebase";
+import { handleCountdown, StartQuiz } from "@/lib/admin/inex";
+import { Addusers } from "@/lib/user/inext";
 import { SignedIn, SignOutButton } from "@clerk/clerk-react";
 import { useUser } from "@clerk/nextjs";
-import { doc, setDoc } from "firebase/firestore/lite";
+import { get, ref } from "firebase/database";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { useEffect } from "react";
 import { toast } from "sonner";
 export default function Home() {
   const { user } = useUser();
   const isadmin = user?.publicMetadata.role === "admin";
-  const handleAdminUpdate = async (userId: string) => {
-    if (!userId) {
-      console.error("User ID is undefined");
-      return;
-    }
-    // hi
+  const handleStartQuiz = async () => {
+    handleCountdown("start-quiz").then(() => {
+      toast.success("Quiz has been started");
+    });
+  };
+  useEffect(() => {
+    if (!user) return;
+    if (isadmin) {
+      StartQuiz("start-quiz").then(() => {
+        toast("Quiz has been started");
+      });
+    } else
+      Addusers({
+        id: user?.id || "",
+        username: user?.username || "",
+        email: user?.primaryEmailAddress?.emailAddress || "",
+        imageProfile: user?.imageUrl || "",
+        createdAt: user.createdAt || new Date(),
+      });
+  }, [user, isadmin]);
 
-    try {
-      await setDoc(doc(db, "users", userId), { role: "admin" });
-      toast("You have successfully updated your role to admin");
-    } catch (error) {
-      console.error("Error updating document:", error);
-      toast("Error updating document: ");
+  const handleStart = async () => {
+    console.log("start");
+    const snapshot = await get(ref(database, "start-quiz/start"));
+    if (!snapshot.val().text) {
+      toast("Quiz has not started yet");
+      return;
+    } else {
+      redirect("/quiz");
     }
   };
   return (
@@ -85,8 +105,8 @@ export default function Home() {
                 You have access to the admin panel
               </p>
               <button
-                onClick={async () => {
-                  await handleAdminUpdate(user.id || "");
+                onClick={() => {
+                  handleStartQuiz();
                 }}
                 className="px-4 py-2 w-full text-center text-white bg-blue-600 rounded hover:bg-blue-700 transition-all duration-300"
               >
@@ -95,6 +115,22 @@ export default function Home() {
             </div>
           )}
         </SignedIn>
+      )}
+      {user && !isadmin && (
+        <div className="mt-8 p-6 bg-white rounded-xl shadow-lg max-w-sm w-full">
+          <h2 className="text-xl font-bold text-gray-800 text-center">
+            Start Quiz
+          </h2>
+          <p className="text-gray-600 mt-2 text-center">
+            Ready to test your knowledge?
+          </p>
+          <button
+            onClick={() => handleStart()}
+            className="mt-4 block w-full px-4 py-2 text-white bg-green-600 rounded text-center hover:bg-green-700 transition-all duration-300"
+          >
+            Begin Quiz
+          </button>
+        </div>
       )}
     </div>
   );
