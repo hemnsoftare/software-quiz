@@ -4,7 +4,7 @@ import { gettopUsers_getusercurrent, setUserAnswer } from "@/lib/user/inext";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { get, ref } from "firebase/database";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 interface Question {
   id: number;
@@ -89,10 +89,9 @@ export default function QuizPage() {
   const [isRevealingAnswer, setIsRevealingAnswer] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
   const [timeStart, setTimeStart] = useState<number>(30);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  // const intervalRef = useRef<NodeJS.Timeout | null>(null);
   // const rankingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { user } = useUser();
-
   const { data, isLoading } = useQuery({
     queryKey: [currentQuestion],
     queryFn: async () => {
@@ -180,7 +179,7 @@ export default function QuizPage() {
     setTimeout(() => {
       setShowRanking(true);
       // settimeleftRacking(5); // Show ranking for 5 seconds
-    }, 2000);
+    }, 3000);
   };
 
   const moveToNextQuestion = () => {

@@ -27,6 +27,7 @@ export default function Home() {
     } else
       Addusers({
         id: user?.id || "",
+        answer: 0,
         username: user?.username || "",
         email: user?.primaryEmailAddress?.emailAddress || "",
         imageProfile: user?.imageUrl || "",
