@@ -1,8 +1,10 @@
 "use client";
 import { database } from "@/config/firebase";
+import { gettopUsers_getusercurrent, setUserAnswer } from "@/lib/user/inext";
+import { useUser } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import { get, ref } from "firebase/database";
 import { useState, useEffect, useRef } from "react";
-import { toast } from "sonner";
 
 interface Question {
   id: number;
@@ -80,13 +82,25 @@ const questions: Question[] = [
 ];
 export default function QuizPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [showRanking, setShowRanking] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(20);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isRevealingAnswer, setIsRevealingAnswer] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
-  const [timeStart, setTimeStart] = useState<number | null>(null);
+  const [timeStart, setTimeStart] = useState<number>(30);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  // const rankingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { user } = useUser();
+
+  const { data, isLoading } = useQuery({
+    queryKey: [currentQuestion],
+    queryFn: async () => {
+      if (currentQuestion === 0) return null;
+      return await gettopUsers_getusercurrent(user?.id || "");
+    },
+    enabled: showRanking, // Fetch ranking only when needed
+  });
 
   useEffect(() => {
     const fetchQuizStartTime = async () => {
@@ -94,63 +108,87 @@ export default function QuizPage() {
         const snapshot = await get(ref(database, "start-quiz/start"));
         const initialTime = snapshot.val()?.timeLeft ?? 10;
         setTimeStart(initialTime);
-
-        if (!snapshot.val()?.text) {
-          toast("Quiz has not started yet");
-        } else {
-          setQuizStarted(true);
-        }
+        setQuizStarted(!!snapshot.val()?.text);
       } catch (error) {
         console.error("Error fetching quiz start time:", error);
       }
     };
-
     fetchQuizStartTime();
   }, []);
 
+  // time start
+  // Timer for quiz start countdown
   useEffect(() => {
-    if (quizStarted && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev > 1) return prev - 1;
-          clearInterval(intervalRef.current!);
-          return 0;
+    if (quizStarted && timeStart > 0) {
+      const startInterval = setInterval(() => {
+        setTimeStart((prev) => {
+          if (prev === 1) {
+            clearInterval(startInterval);
+            setCurrentQuestion(0); // Reset to first question when countdown reaches 0
+            setTimeLeft(15); // Reset time for each question
+            return 0;
+          }
+          return prev - 1;
         });
-        if (timeLeft === 1) handleTimeout();
       }, 1000);
-    }
 
-    return () => clearInterval(intervalRef.current!);
-  }, [quizStarted, timeLeft]);
+      return () => clearInterval(startInterval);
+    }
+  }, [quizStarted, timeStart]);
+
+  // Timer for question countdown
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timeInterval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev === 1) {
+            handleTimeout();
+            clearInterval(timeInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timeInterval);
+    }
+  }, [timeLeft]);
+
+  // show racking
+  useEffect(() => {
+    if (showRanking) {
+      const rankingTimeout = setTimeout(() => {
+        setShowRanking(false);
+      }, 5000);
+
+      moveToNextQuestion();
+      return () => clearTimeout(rankingTimeout);
+    }
+  }, [showRanking]);
 
   const handleAnswer = (selectedOption: number) => {
-    if (selectedAnswer === null) {
-      setSelectedAnswer(selectedOption);
+    setSelectedAnswer(selectedOption);
+    if (selectedOption === questions[currentQuestion].correctAnswer) {
+      console.log("Correct answer!");
+      setScore((prev) => prev + timeLeft);
     }
   };
 
   const handleTimeout = () => {
     setIsRevealingAnswer(true);
-
-    if (selectedAnswer === questions[currentQuestion].correctAnswer) {
-      setScore((prev) => prev + timeLeft);
-    }
-
+    setUserAnswer({ answer: score, userid: user?.id || "" });
     setTimeout(() => {
-      moveToNextQuestion();
+      setShowRanking(true);
+      // settimeleftRacking(5); // Show ranking for 5 seconds
     }, 2000);
   };
 
   const moveToNextQuestion = () => {
     setCurrentQuestion((prev) => prev + 1);
-    setTimeLeft(10);
+    setTimeLeft(20);
     setSelectedAnswer(null);
     setIsRevealingAnswer(false);
   };
-
-  useEffect(() => {
-    console.log("Updated question:", currentQuestion);
-  }, [currentQuestion]);
 
   const getButtonClass = (index: number) => {
     if (selectedAnswer === index) {
@@ -160,19 +198,56 @@ export default function QuizPage() {
           : "w-full p-3 text-left border rounded-lg bg-red-500 text-white"
         : "w-full p-3 text-left border rounded-lg bg-orange-500 text-white";
     }
-
     return isRevealingAnswer &&
       index === questions[currentQuestion].correctAnswer
       ? "w-full p-3 text-left border rounded-lg bg-green-500 text-white"
       : "w-full p-3 text-left border rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-300";
   };
-
+  console.log(timeLeft);
   return (
     <div className="min-h-screen flex items-center flex-col justify-center bg-gradient-to-r from-blue-300 to-purple-500 p-4">
-      {timeStart && timeStart >= 0 ? (
+      {timeStart && timeStart > 0 ? (
         <h1 className="text-4xl font-bold text-white mb-8 text-center animate-pulse">
           Quiz starts in: {timeStart} seconds
         </h1>
+      ) : currentQuestion !== 0 && showRanking ? (
+        <div className="max-w-2xl w-full bg-white p-8 rounded-xl shadow-xl">
+          <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
+            Quiz Results
+          </h1>
+          {isLoading ? (
+            <div className="flex justify-center items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {data?.topUsers?.slice(0, 3).map((user, index) => (
+                <div
+                  key={user.id}
+                  className={`p-4 rounded-lg flex justify-between items-center ${
+                    index === 0
+                      ? "bg-yellow-100"
+                      : index === 1
+                      ? "bg-gray-100"
+                      : index === 2
+                      ? "bg-orange-100"
+                      : ""
+                  }`}
+                >
+                  <span className="font-bold">#{index + 1}</span>
+                  <span>{user.username}</span>
+                  <span>{user.answer}</span>
+                </div>
+              ))}
+              {data?.currentUser && (
+                <div className="p-4 bg-blue-100 rounded-lg flex justify-between items-center mt-8">
+                  <span>You</span>
+                  <span>{data.currentUser.answer}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="max-w-2xl w-full bg-white p-8 rounded-xl shadow-xl">
           <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
