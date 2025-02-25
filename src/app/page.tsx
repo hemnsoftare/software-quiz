@@ -110,7 +110,11 @@ export default function Home() {
       )}
       {user && !isadmin && (
         <button
-          onClick={() => handleStart()}
+          onClick={() => {
+            setTimeout(() => {
+              handleStart();
+            }, Math.floor(Math.random() * (200 - 50 + 1)) + 50);
+          }}
           className="mt-4 block px-20 py-2 bg-[#5B31D1] active:scale-[.89] active:bg-[#5632bb] text-white font-semibold rounded-lg text-center  transition-all duration-100"
         >
           Ready

@@ -4,13 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import React from "react";
-const Leaderboard = ({
-  title,
-}: {
-  title: string;
-  topUsers: { name: string; email: string; points: number; image: string }[];
-  currentUser: { name: string; points: number; image: string };
-}) => {
+const Leaderboard = () => {
   const { user } = useUser();
   const { data, isLoading } = useQuery({
     queryKey: ["resualt"],
@@ -36,7 +30,9 @@ const Leaderboard = ({
     );
   return (
     <div className="flex flex-col items-center p-4 bg-white min-h-screen">
-      <h1 className="text-xl font-bold text-purple-700 py-4">{title}</h1>
+      <h1 className="text-xl font-bold text-purple-700 py-4">
+        1st Stage Competition
+      </h1>
       {isWinner && (
         <div className="border border-gray-300 bg-[#ECEDED] p-2  mt-8 mb-5 rounded-lg w-full max-w-md grid items-center justify-center">
           <p className=" text-purple-700 text-sm font-bold">
@@ -171,44 +167,4 @@ const Leaderboard = ({
   );
 };
 
-export default function CompetitionPage() {
-  const topUsers: {
-    name: string;
-    email: string;
-    points: number;
-    image: string;
-  }[] = [
-    {
-      name: "User 1",
-      email: "user1.png@gmail.com",
-      points: 50,
-      image: "/profile.png",
-    },
-    {
-      name: "User 2",
-      email: "user2@gmail.com",
-      points: 50,
-      image: "/profile.png",
-    },
-    {
-      name: "User 3",
-      email: "user3@gmail.com",
-      points: 50,
-      image: "/profile.png",
-    },
-  ];
-
-  const currentUser: {
-    name: string;
-    points: number;
-    image: string;
-  } = { name: "Me", points: 50, image: "/profile.png" };
-
-  return (
-    <Leaderboard
-      title="1st Stage Competition"
-      topUsers={topUsers}
-      currentUser={currentUser}
-    />
-  );
-}
+export default Leaderboard;
