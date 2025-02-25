@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.0",
+    "@heroicons/react": "^2.2.0",
+    "@heroui/progress": "^2.2.10",
+    "@nextui-org/react": "^2.6.11",
     "@radix-ui/react-slot": "^1.1.2",
     "@tanstack/react-query": "^5.66.9",
     "class-variance-authority": "^0.7.1",

@@ -12,6 +12,7 @@ import { Message } from "../admin/inex";
 
 export interface User {
   id: string;
+  fullName?: string;
   username: string;
   email: string;
   createdAt: Date;
@@ -92,12 +93,13 @@ export const gettopUsers_getusercurrent = async (
     );
     const getusercurrent = await get(ref(database, "users/" + userid));
     const currentUser = getusercurrent.val();
-
+    console.log(currentUser);
     const users: User[] = [];
     const snapshot = await get(topUsersQuery);
     snapshot.forEach((childSnapshot) => {
       users.push(childSnapshot.val());
     });
+    console.log("users", users);
     return { topUsers: users, currentUser };
   } catch (error) {
     console.error("Error getting all users:", error);

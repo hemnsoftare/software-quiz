@@ -2,15 +2,16 @@
 import { database } from "@/config/firebase";
 import { handleCountdown, StartQuiz } from "@/lib/admin/inex";
 import { Addusers } from "@/lib/user/inext";
-import { SignedIn, SignOutButton } from "@clerk/clerk-react";
+import { SignedIn } from "@clerk/clerk-react";
 import { useUser } from "@clerk/nextjs";
 import { get, ref } from "firebase/database";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 export default function Home() {
+  const pathname = usePathname();
   const { user } = useUser();
   const isadmin = user?.publicMetadata.role === "admin";
   const handleStartQuiz = async () => {
@@ -28,6 +29,7 @@ export default function Home() {
       Addusers({
         id: user?.id || "",
         answer: 0,
+        fullName: user?.fullName || "",
         username: user?.username || "",
         email: user?.primaryEmailAddress?.emailAddress || "",
         imageProfile: user?.imageUrl || "",
@@ -46,21 +48,25 @@ export default function Home() {
     }
   };
   return (
-    <div className="w-full min-h-screen bg-gradient-to-r from-blue-100 to-purple-100 flex flex-col items-center justify-center">
-      <h1 className="text-5xl font-bold text-center text-gray-800 mb-4">
-        Welcome to Our Platform
+    <div className="w-full  h-screen px-3  flex pt-16 pb-12 flex-col items-center justify-between">
+      <h1 className="text-[24px] font-bold text-center  text-[#4700D6] mb-4">
+        1st Stage Competition
       </h1>
       {!user && (
-        <div className="flex gap-6">
+        <div className="flex w-full flex-col text-center items-center justify-center gap-6">
+          <Image
+            src="/home.png"
+            width={200}
+            height={200}
+            alt="Logo"
+            className="min-w-full min-h-[140px] rounded-full  mb-4"
+          />
+          <h1 className="text-[20px] font-bold text-center  text-[#4700D6] mb-4">
+            To participate in this competition :
+          </h1>
           <Link
-            href={"/sign-in"}
-            className="px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold"
-          >
-            Login
-          </Link>
-          <Link
-            href={"/sign-up"}
-            className="px-6 py-3 text-blue-600 bg-white rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl border-2 border-blue-600 font-semibold"
+            href="/sign-up"
+            className="px-10 py-2 active:scale-[.8] transition-all duration-200 bg-[#4700D6] text-white rounded-lg"
           >
             Register
           </Link>
@@ -68,71 +74,73 @@ export default function Home() {
       )}
       {user && (
         <SignedIn>
-          <div className="mt-8 p-6 bg-white rounded-xl shadow-lg max-w-sm w-full">
-            <div className="flex flex-col items-center">
+          <h2 className="w-full text-center text-[20  px] font-semibold text-[#5B31D1] ">
+            {" "}
+            We’ll start in a minute!
+          </h2>
+          <div className="mt-8 p-6 bg-[#5B31D1] rounded-xl shadow-lg max-w-sm w-full">
+            <div className="flex flex-col text-white items-center">
               <Image
                 src={user.imageUrl || "/"}
                 width={96}
                 height={96}
                 alt="Profile"
-                className="w-24 h-24 rounded-full object-cover mb-4"
+                className="w-24 h-24 border border-white rounded-full object-cover mb-4"
               />
               <h2 className="text-xl font-bold text-gray-800">
                 {user.username}
               </h2>
-              <p className="text-gray-600">{user.fullName}</p>
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="">{user.fullName}</p>
+              <p className=" text-sm mt-2">
                 {user.primaryEmailAddress?.emailAddress}
-              </p>
-            </div>
-            <div className="flex w-full items-center justify-center gap-4 mt-6">
-              <button
-                onClick={() => user?.delete()}
-                className="px-4 py-2 w-full text-white bg-red-600 rounded hover:bg-red-700 transition-all duration-300"
-              >
-                Delete Account
-              </button>
-              <p className="px-4 py-2 w-full text-center text-white bg-gray-600 rounded hover:bg-gray-700 transition-all duration-300">
-                <SignOutButton>Logout</SignOutButton>
               </p>
             </div>
           </div>
           {isadmin && (
-            <div className="mt-8 p-6 text-center bg-white rounded-xl shadow-lg max-w-sm w-full">
-              <h2 className="text-xl my-3 font-bold text-gray-800">
-                Admin Panel
-              </h2>
-              <p className="text-gray-600 my-3">
-                You have access to the admin panel
-              </p>
-              <button
-                onClick={() => {
-                  handleStartQuiz();
-                }}
-                className="px-4 py-2 w-full text-center text-white bg-blue-600 rounded hover:bg-blue-700 transition-all duration-300"
-              >
-                Go to Admin Panel
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                handleStartQuiz();
+              }}
+              className="mt-4 block px-20 py-2 bg-[#5B31D1] active:scale-[.89] active:bg-[#5632bb] text-white font-semibold rounded-lg text-center  transition-all duration-100"
+            >
+              Start
+            </button>
           )}
         </SignedIn>
       )}
       {user && !isadmin && (
-        <div className="mt-8 p-6 bg-white rounded-xl shadow-lg max-w-sm w-full">
-          <h2 className="text-xl font-bold text-gray-800 text-center">
-            Start Quiz
-          </h2>
-          <p className="text-gray-600 mt-2 text-center">
-            Ready to test your knowledge?
-          </p>
-          <button
-            onClick={() => handleStart()}
-            className="mt-4 block w-full px-4 py-2 text-white bg-green-600 rounded text-center hover:bg-green-700 transition-all duration-300"
-          >
-            Begin Quiz
-          </button>
-        </div>
+        <button
+          onClick={() => handleStart()}
+          className="mt-4 block px-20 py-2 bg-[#5B31D1] active:scale-[.89] active:bg-[#5632bb] text-white font-semibold rounded-lg text-center  transition-all duration-100"
+        >
+          Ready
+        </button>
       )}
+      <div className="w-full flex items-center justify-center gap-4">
+        {pathname === "/" ? (
+          !user ? (
+            <span className="w-[42px] bg-[#4700D6] h-2 rounded-lg"></span>
+          ) : (
+            <span className="w-[25px] bg-[#C3C3C3] h-2 rounded-lg"></span>
+          )
+        ) : (
+          user && <span className="w-[25px] bg-[#C3C3C3] h-2 rounded-lg"></span>
+        )}
+        {pathname === "sign-up" ? (
+          <span className="w-[42px] bg-[#4700D6] h-2 rounded-lg"></span>
+        ) : (
+          <span className="w-[25px] bg-[#C3C3C3] h-2 rounded-lg"></span>
+        )}
+        {pathname === "/" ? (
+          user ? (
+            <span className="w-[42px] bg-[#4700D6] h-2 rounded-lg"></span>
+          ) : (
+            <span className="w-[25px] bg-[#C3C3C3] h-2 rounded-lg"></span>
+          )
+        ) : (
+          user && <span className="w-[25px] bg-[#C3C3C3] h-2 rounded-lg"></span>
+        )}
+      </div>
     </div>
   );
 }
