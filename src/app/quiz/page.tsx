@@ -19,71 +19,82 @@ interface Question {
 const questions: Question[] = [
   {
     id: 1,
-    question: "What is the entry point of a Java program?",
+    question: "What is the correct way to print text in Java?",
     options: [
-      "Java public static void main(String[] args)",
-      "start()",
-      "run()",
-      "execute()",
+      'System-out-println("Hello");',
+      'echo "Hello";',
+      'print("Hello");',
+      'System.out.println("Hello");',
     ],
+    correctAnswer: 3,
     x: 1,
-    correctAnswer: 0,
   },
   {
     id: 2,
-    question: "Which keyword is used to create an object in Java?",
-    options: ["new", "create", "object", "instance"],
+    question: "Which logic gate outputs 1 only when both inputs are 1?",
+    options: ["AND", "OR", "XOR", "NOT"],
     correctAnswer: 0,
+    x: 1,
+  },
+  {
+    id: 3,
+    question: "Convert the binary number 1011 to decimal.",
+    options: ["10", "11", "12", "13"],
+    correctAnswer: 1,
+    x: 1,
+  },
+  {
+    id: 4,
+    question: "Which of the following is NOT a valid Java data type?",
+    options: ["short", "byte", "integer", "float"],
+    correctAnswer: 1,
+    x: 1,
+  },
+  {
+    id: 5,
+    question: "Which of the following is a valid Java variable name?",
+    options: ["1variable", "variable-1", "_variable1", "var 1"],
+    correctAnswer: 1,
+    x: 1,
+  },
+  {
+    id: 6,
+    question:
+      "What will be the value of x after this executes? :\n int x = 7;\n x *= 2 + 3;",
+    options: ["5", "14", "35", "10"],
+    correctAnswer: 1,
     x: 2,
   },
-  // {
-  //   id: 3,
-  //   question: "What is the parent class of all classes in Java?",
-  //   options: ["Object", "Super", "Parent", "Main"],
-  //   correctAnswer: 0,
-  // },
-  // {
-  //   id: 4,
-  //   question: "Which of these is not a primitive data type in Java?",
-  //   options: ["String", "int", "boolean", "char"],
-  //   correctAnswer: 0,
-  // },
-  // {
-  //   id: 5,
-  //   question: "What operator is used for string concatenation in Java?",
-  //   options: ["+", "&", "*", ">>"],
-  //   correctAnswer: 0,
-  // },
-  // {
-  //   id: 6,
-  //   question: "Which keyword prevents a method from being overridden?",
-  //   options: ["final", "static", "private", "abstract"],
-  //   correctAnswer: 0,
-  // },
-  // {
-  //   id: 7,
-  //   question: "What is the default value of an int variable in Java?",
-  //   options: ["0", "null", "undefined", "1"],
-  //   correctAnswer: 0,
-  // },
-  // {
-  //   id: 8,
-  //   question: "Which collection type maintains insertion order in Java?",
-  //   options: ["ArrayList", "HashSet", "TreeSet", "HashMap"],
-  //   correctAnswer: 0,
-  // },
-  // {
-  //   id: 9,
-  //   question: "What is the scope of package-private access modifier?",
-  //   options: ["Same package", "Same class", "Subclasses only", "Everywhere"],
-  //   correctAnswer: 0,
-  // },
-  // {
-  //   id: 10,
-  //   question: "Which keyword is used for exception handling in Java?",
-  //   options: ["try", "catch", "throw", "All of these"],
-  //   correctAnswer: 3,
-  // },
+  {
+    id: 7,
+    question: "Which Boolean expression is equivalent to A + (A * B)?",
+    options: ["B", "A", "A * B", "A + B"],
+    correctAnswer: 2,
+    x: 1,
+  },
+  {
+    id: 8,
+    question: "Convert the binary number 1011 to decimal.",
+    options: ["10", "11", "12", "13"],
+    correctAnswer: 1,
+    x: 1,
+  },
+  {
+    id: 9,
+    question:
+      "How many times will the following loop execute?:\nfor(int i = 0; i > 5; i++) \n{System.out.println(i);}",
+    options: ["5", "0", "4", "Infinite"],
+    correctAnswer: 1,
+    x: 1,
+  },
+  {
+    id: 10,
+    question:
+      " What is the output of the following code? :\nint a = 5;\nint b = 2;\nSystem.out.println(a % b);",
+    options: ["2.5", "1", "2", "Compile error"],
+    correctAnswer: 1,
+    x: 1,
+  },
 ];
 export default function QuizPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
