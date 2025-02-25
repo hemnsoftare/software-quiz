@@ -103,7 +103,6 @@ export default function QuizPage() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isRevealingAnswer, setIsRevealingAnswer] = useState(false);
-  const [quizStarted, setQuizStarted] = useState(false);
   const [timeStart, setTimeStart] = useState<number>(30);
   // const intervalRef = useRef<NodeJS.Timeout | null>(null);
   // const rankingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -118,30 +117,26 @@ export default function QuizPage() {
     enabled: showRanking, // Fetch ranking only when needed
   });
 
-  useEffect(() => {
-    const fetchQuizStartTime = async () => {
-      try {
-        const snapshot = await get(ref(database, "start-quiz/start"));
-        const initialTime = snapshot.val()?.timeLeft ?? 10;
-        setTimeStart(initialTime);
-        setQuizStarted(!!snapshot.val()?.text);
-      } catch (error) {
-        console.error("Error fetching quiz start time:", error);
-      }
-    };
-    fetchQuizStartTime();
-  }, []);
+  useQuery({
+    queryKey: ["quiz"],
+    queryFn: async () => {
+      const snapshot = await get(ref(database, "start-quiz/start"));
+      setTimeStart(snapshot.val().timeLeft);
+    },
+  });
 
   // time start
   // Timer for quiz start countdown
   useEffect(() => {
-    if (quizStarted && timeStart > 0) {
+    if (timeStart > 0) {
       const startInterval = setInterval(() => {
+        if (timeStart) {
+          clearInterval(startInterval);
+          setCurrentQuestion(0); // Reset to first question when countdown reaches 0
+          setTimeLeft(15); // Reset time for each question
+        }
         setTimeStart((prev) => {
           if (prev === 1) {
-            clearInterval(startInterval);
-            setCurrentQuestion(0); // Reset to first question when countdown reaches 0
-            setTimeLeft(15); // Reset time for each question
             return 0;
           }
           return prev - 1;
@@ -150,7 +145,7 @@ export default function QuizPage() {
 
       return () => clearInterval(startInterval);
     }
-  }, [quizStarted, timeStart]);
+  }, [timeStart]);
 
   // Timer for question countdown
   useEffect(() => {
@@ -225,7 +220,7 @@ export default function QuizPage() {
       ? "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-green-500 text-white"
       : "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-[#C8C8C8]/50 border-2 text-[#5B31D1]   transition-all duration-300";
   };
-  console.log(timeLeft);
+  console.log(timeStart);
   return (
     <div className="min-h-screen flex items-center  flex-col justify-between  pt-12 pb-20 px-3">
       {/* <h1>{timeLeft}</h1> */}
