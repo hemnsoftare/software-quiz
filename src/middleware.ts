@@ -9,7 +9,10 @@ export default clerkMiddleware(async (auth, req) => {
   if (url.pathname.startsWith("/quiz")) {
     const snapshot = await get(ref(database, "start-quiz/start"));
 
-    if (snapshot.exists() && snapshot.val().timeLeft < 1) {
+    if (
+      (snapshot.exists() && snapshot.val().timeLeft < 1) ||
+      snapshot.val().timeLeft === 30
+    ) {
       return NextResponse.redirect(new URL("/outQuiz", req.url)); // Redirect if time is up
     }
   }
