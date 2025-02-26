@@ -1,7 +1,6 @@
 "use client";
 import { database } from "@/config/firebase";
 import { gettopUsers_getusercurrent, setUserAnswer } from "@/lib/user/inext";
-import { useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { get, ref } from "firebase/database";
 import Image from "next/image";
@@ -38,23 +37,23 @@ const questions: Question[] = [
   },
   {
     id: 3,
-    question: "Convert the binary number 1011 to decimal.",
-    options: ["10", "11", "12", "13"],
-    correctAnswer: 1,
+    question: "What is the base number of the octal number system?",
+    options: ["10", "2", "8", "16"],
+    correctAnswer: 2,
     x: 1,
   },
   {
     id: 4,
     question: "Which of the following is NOT a valid Java data type?",
     options: ["short", "byte", "integer", "float"],
-    correctAnswer: 1,
+    correctAnswer: 2,
     x: 1,
   },
   {
     id: 5,
     question: "Which of the following is a valid Java variable name?",
     options: ["1variable", "variable-1", "_variable1", "var 1"],
-    correctAnswer: 1,
+    correctAnswer: 2,
     x: 1,
   },
   {
@@ -62,14 +61,14 @@ const questions: Question[] = [
     question:
       "What will be the value of x after this executes? :\n int x = 7;\n x *= 2 + 3;",
     options: ["5", "14", "35", "10"],
-    correctAnswer: 1,
+    correctAnswer: 2,
     x: 2,
   },
   {
     id: 7,
     question: "Which Boolean expression is equivalent to A + (A * B)?",
     options: ["B", "A", "A * B", "A + B"],
-    correctAnswer: 2,
+    correctAnswer: 1,
     x: 1,
   },
   {
@@ -91,9 +90,9 @@ const questions: Question[] = [
     id: 10,
     question:
       " What is the output of the following code? :\nint a = 5;\nint b = 2;\nSystem.out.println(a % b);",
-    options: ["2.5", "1", "2", "Compile error"],
-    correctAnswer: 1,
-    x: 1,
+    options: ["2.5", "2", "1", "Compile error"],
+    correctAnswer: 2,
+    x: 2,
   },
 ];
 export default function QuizPage() {
@@ -106,13 +105,14 @@ export default function QuizPage() {
   const [timeStart, setTimeStart] = useState<number>(30);
   // const intervalRef = useRef<NodeJS.Timeout | null>(null);
   // const rankingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const { user } = useUser();
-  const router = useRouter().push;
+  const storedUser = localStorage.getItem("userid");
+  const userId = storedUser ? JSON.parse(storedUser).id : null;
+  const router = useRouter();
   const { data, isLoading } = useQuery({
     queryKey: [currentQuestion],
     queryFn: async () => {
       if (currentQuestion === 0) return null;
-      return await gettopUsers_getusercurrent(user?.id || "");
+      return await gettopUsers_getusercurrent(userId);
     },
     enabled: showRanking, // Fetch ranking only when needed
   });
@@ -128,9 +128,12 @@ export default function QuizPage() {
   // time start
   // Timer for quiz start countdown
   useEffect(() => {
-    if (timeStart > 0) {
+    if (timeStart >= 1) {
       const startInterval = setInterval(() => {
-        if (timeStart) {
+        if (timeStart === 1) {
+          console.log(
+            "--------------------------------------------------------"
+          );
           clearInterval(startInterval);
           setCurrentQuestion(0); // Reset to first question when countdown reaches 0
           setTimeLeft(15); // Reset time for each question
@@ -148,22 +151,37 @@ export default function QuizPage() {
   }, [timeStart]);
 
   // Timer for question countdown
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timeInterval = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev === 1) {
-            handleTimeout();
-            clearInterval(timeInterval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+  // useEffect(() => {
+  //   if (timeLeft > 0) {
+  //     const timeInterval = setInterval(() => {
+  //       setTimeLeft((prev) => {
+  //         if (prev === 0.01) {
+  //           handleTimeout();
+  //           clearInterval(timeInterval);
+  //           return 0;
+  //         }
+  //         return prev - 0.01;
+  //       });
+  //     }, 10);
 
-      return () => clearInterval(timeInterval);
+  //     return () => clearInterval(timeInterval);
+  //   }
+  // }, [timeLeft]);
+
+  useEffect(() => {
+    if (timeStart === 0) {
+      if (timeLeft <= 0) {
+        handleTimeout(); // Call timeout handler when time runs out
+        return;
+      }
+
+      const timeInterval = setInterval(() => {
+        setTimeLeft((prev) => Math.max(prev - 0.01, 0)); // Prevent negative values
+      }, 10);
+
+      return () => clearInterval(timeInterval); // Cleanup on unmount
     }
-  }, [timeLeft]);
+  }, [timeLeft, timeStart]); // Only depends on timeLeft
 
   // show racking
   useEffect(() => {
@@ -181,16 +199,20 @@ export default function QuizPage() {
     setSelectedAnswer(selectedOption);
     if (selectedOption === questions[currentQuestion].correctAnswer) {
       console.log("Correct answer!");
-      setScore((prev) => prev + timeLeft);
+      setScore((prev) => {
+        const pointCurrentQuision =
+          timeLeft * 10 * questions[currentQuestion].x;
+        return prev + pointCurrentQuision;
+      });
     }
   };
 
   const handleTimeout = () => {
     setIsRevealingAnswer(true);
-    setUserAnswer({ answer: score, userid: user?.id || "" });
+    setUserAnswer({ answer: score, userid: userId || "" });
     if (currentQuestion === questions.length - 1) {
       console.log(" check ot left ");
-      router("/Resualt");
+      router.push("/Resualt");
       return;
     }
 
@@ -213,14 +235,16 @@ export default function QuizPage() {
         ? index === questions[currentQuestion].correctAnswer
           ? "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-green-500 text-white"
           : "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-red-500 text-white"
-        : "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-[#5B31D1] text-white";
+        : "w-full p-3 text-left border text-[18px] shadow-md active:scale-[0.98] duration-200 transition-all rounded-lg bg-[#5B31D1] text-white";
     }
+    console.log(isRevealingAnswer);
     return isRevealingAnswer &&
       index === questions[currentQuestion].correctAnswer
       ? "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-green-500 text-white"
-      : "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-[#C8C8C8]/50 border-2 text-[#5B31D1]   transition-all duration-300";
+      : "w-full p-3 text-left border text-[18px] shadow-md rounded-lg bg-[#C8C8C8]/50 border-2 text-[#5B31D1] active:scale-[0.98] transition-all duration-200";
   };
-  console.log(timeStart);
+  // console.log(timeLeft / (currentQuestion === 0 ? 15 : 18));
+
   return (
     <div className="min-h-screen flex items-center  flex-col justify-between  pt-12 pb-20 px-3">
       {/* <h1>{timeLeft}</h1> */}
@@ -271,9 +295,7 @@ export default function QuizPage() {
                     <div
                       key={users.id}
                       className={`p-4 rounded-xl border-2 border-gray-300 flex items-center justify-between shadow-md ${
-                        isCurrentUser
-                          ? "bg-green-500 text-white" // Change background to green if current user is in top 3
-                          : index === 0
+                        index === 0
                           ? "bg-yellow-400 text-black"
                           : index === 1
                           ? "bg-gray-400 text-white"
@@ -300,28 +322,23 @@ export default function QuizPage() {
                 })}
 
               {/* Show current user separately only if they are NOT in the top 3 */}
-              {data?.currentUser &&
-                !data.topUsers
-                  .slice(0, 3)
-                  .some((user) => user.id === data.currentUser.id) && (
-                  <div className="p-4 bg-gray-100 rounded-xl border-2 border-gray-300 flex items-center justify-between shadow-md">
-                    <div className="flex items-center space-x-3">
-                      <Image
-                        width={32}
-                        height={32}
-                        src={
-                          data.currentUser.imageProfile || "/default-avatar.png"
-                        }
-                        alt="Me"
-                        className="w-8 h-8 rounded-full"
-                      />
-                      <span className="font-semibold">Me</span>
-                    </div>
-                    <span className="font-bold">
-                      {data.currentUser.answer} P
-                    </span>
+              {data?.currentUser && (
+                <div className="p-4 bg-gray-100 rounded-xl border-2 border-gray-300 flex items-center justify-between shadow-md">
+                  <div className="flex items-center space-x-3">
+                    <Image
+                      width={32}
+                      height={32}
+                      src={
+                        data.currentUser.imageProfile || "/default-avatar.png"
+                      }
+                      alt="Me"
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <span className="font-semibold">Me</span>
                   </div>
-                )}
+                  <span className="font-bold">{data.currentUser.answer} P</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -329,16 +346,48 @@ export default function QuizPage() {
         <>
           {currentQuestion < questions.length ? (
             <div className="flex self-center items-center flex-col gap-0 justify-between w-full">
-              <div className="flex items-center flex-col gap-0 justify-between w-full">
-                <div className="relative w-full h-6 my-3 shadow-inner border-2 border-gray-200 bg-gray-300 rounded-full overflow-hidden">
+              <h1>{timeLeft}</h1>
+              <div className="flex items-center mb-4 flex-col gap-0 justify-between w-full">
+                <progress
+                  value={timeLeft}
+                  max={15}
+                  className="w-full h-3 rounded-md progress-bar"
+                />
+
+                <style>
+                  {`
+                    /* For WebKit browsers (Chrome, Safari) */
+                    .progress-bar::-webkit-progress-bar {
+                      background-color: #e5e7eb; /* Tailwind's gray-300 */
+                      border-radius: 6px;
+                    }
+
+                    .progress-bar::-webkit-progress-value {
+                      background: linear-gradient(to right, #5B31D1, #4700D6);
+                      border-radius: 6px;
+                    }
+
+                    /* For Firefox */
+                    .progress-bar::-moz-progress-bar {
+                      background: linear-gradient(to right, #5B31D1, #4700D6);
+                      border-radius: 6px;
+                    }
+                  `}
+                </style>
+
+                {/* <div className="relative w-full h-6 my-3 shadow-inner border-2 border-gray-200 bg-gray-300 rounded-full overflow-hidden">
                   <div
                     className={`absolute top-0 left-0 h-full rounded-lg transition-all duration-1000 ease-linear bg-gradient-to-r from-[#5B31D1] to-[#4700D6]`}
-                    style={{ width: `${(timeLeft / 15) * 100}%` }}
+                    style={{
+                      width: `${
+                        (timeLeft / (currentQuestion === 0 ? 15 : 18)) * 100
+                      }%`,
+                    }}
                   ></div>
-                </div>
+                </div> */}
               </div>
 
-              <h2 className="text-xl bg-gradient-to-l relative shadow-lg shadow-[#c8b5ef] border-0  to-[#5B31D1] from-[#4700D6] text-center font-semibold text-white px-3 py-10 rounded-lg">
+              <h2 className="text-xl   relative shadow-lg shadow-[#c8b5ef] border-0 bg-gradient-to-br from-[#4700D6] from-60%   to-[#842BE3]  text-center font-semibold text-white px-3 py-10 rounded-lg">
                 {questions[currentQuestion].question}
                 {questions[currentQuestion].x > 1 && (
                   <span className="absolute bottom-1  right-1 text-white text-[10px] rounded-full border-2 px-2">
@@ -350,7 +399,10 @@ export default function QuizPage() {
                 {questions[currentQuestion].options.map((option, index) => (
                   <button
                     key={index}
-                    onClick={() => handleAnswer(index)}
+                    onClick={() => {
+                      // setIsRevealingAnswer(true);
+                      handleAnswer(index);
+                    }}
                     className={getButtonClass(index)}
                     disabled={selectedAnswer !== null || timeLeft === 1}
                   >

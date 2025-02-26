@@ -12,16 +12,21 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 export default function Home() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const isadmin = user?.publicMetadata.role === "admin";
   const handleStartQuiz = async () => {
     handleCountdown("start-quiz").then(() => {
       toast.success("Quiz has been started");
     });
+    redirect("/quiz");
   };
   useEffect(() => {
     if (!user) return;
+    localStorage.setItem("userid", JSON.stringify({ id: user?.id }));
+
     if (isadmin) {
+      localStorage.setItem("userid", JSON.stringify({ id: user?.id }));
+
       StartQuiz("start-quiz").then(() => {
         toast("Quiz has been started");
       });
@@ -43,12 +48,22 @@ export default function Home() {
     if (!snapshot.val().text) {
       toast("Quiz has not started yet");
       return;
+    } else if (snapshot.val().timeLeft < 1) {
+      toast("Quiz has  started can not start ");
+      return;
     } else {
       redirect("/quiz");
     }
   };
+  if (!isLoaded) {
+    return (
+      <div className="w-full h-screen flex items-center  justify-center">
+        <div className="w-12 h-12 border-4 border-[#5B31D1] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
   return (
-    <div className="w-full  h-screen px-3  flex pt-16 pb-12 flex-col items-center justify-between">
+    <div className="w-full  h-screen px-3 box-border  flex pt-16 pb-12 flex-col items-center justify-between">
       <h1 className="text-[24px] font-bold text-center  text-[#4700D6] mb-4">
         1st Stage Competition
       </h1>
@@ -74,52 +89,55 @@ export default function Home() {
       )}
       {user && (
         <SignedIn>
-          <h2 className="w-full text-center text-[20  px] font-semibold text-[#5B31D1] ">
-            {" "}
-            We’ll start in a minute!
-          </h2>
-          <div className="mt-8 p-6 bg-[#5B31D1] rounded-xl shadow-lg max-w-sm w-full">
-            <div className="flex flex-col text-white items-center">
-              <Image
-                src={user.imageUrl || "/"}
-                width={96}
-                height={96}
-                alt="Profile"
-                className="w-24 h-24 border border-white rounded-full object-cover mb-4"
-              />
-              <h2 className="text-xl font-bold text-gray-800">
-                {user.username}
-              </h2>
-              <p className="">{user.fullName}</p>
-              <p className=" text-sm mt-2">
-                {user.primaryEmailAddress?.emailAddress}
-              </p>
+          <div className="flex items-center justify-center w-full overflow-hidden flex-col gap-4">
+            <h2 className="w-full text-center text-[20px] font-semibold text-[#5B31D1] ">
+              {" "}
+              We’ll start in a minute!
+            </h2>
+            <div className="mt-8 p-6 bg-[#5B31D1] rounded-xl shadow-lg max-w-sm w-full">
+              <div className="flex flex-col text-white items-center">
+                <Image
+                  src={user.imageUrl || "/"}
+                  width={96}
+                  height={96}
+                  alt="Profile"
+                  className="w-24 h-24 border border-white rounded-full object-cover mb-4"
+                />
+                <h2 className="text-xl font-bold text-gray-800">
+                  {user.username}
+                </h2>
+                <p className="">{user.fullName}</p>
+                <p className=" text-sm mt-2">
+                  {user.primaryEmailAddress?.emailAddress}
+                </p>
+              </div>
             </div>
+            {user && !isadmin && (
+              <button
+                onClick={() => {
+                  setTimeout(() => {
+                    handleStart();
+                  }, Math.floor(Math.random() * (200 - 50 + 1)) + 50);
+                }}
+                className="mt-4 block px-20 py-2 bg-[#5B31D1] active:scale-[.89] active:bg-[#5632bb] text-white font-semibold rounded-lg text-center  transition-all duration-100"
+              >
+                Ready
+              </button>
+            )}
+            {isadmin && (
+              <button
+                onClick={() => {
+                  handleStartQuiz();
+                }}
+                className="mt-4 block px-20 py-2 bg-[#5B31D1] active:scale-[.89] active:bg-[#5632bb] text-white font-semibold rounded-lg text-center  transition-all duration-100"
+              >
+                Start
+              </button>
+            )}
           </div>
-          {isadmin && (
-            <button
-              onClick={() => {
-                handleStartQuiz();
-              }}
-              className="mt-4 block px-20 py-2 bg-[#5B31D1] active:scale-[.89] active:bg-[#5632bb] text-white font-semibold rounded-lg text-center  transition-all duration-100"
-            >
-              Start
-            </button>
-          )}
         </SignedIn>
       )}
-      {user && !isadmin && (
-        <button
-          onClick={() => {
-            setTimeout(() => {
-              handleStart();
-            }, Math.floor(Math.random() * (200 - 50 + 1)) + 50);
-          }}
-          className="mt-4 block px-20 py-2 bg-[#5B31D1] active:scale-[.89] active:bg-[#5632bb] text-white font-semibold rounded-lg text-center  transition-all duration-100"
-        >
-          Ready
-        </button>
-      )}
+
       <div className="w-full flex items-center justify-center gap-4">
         {pathname === "/" ? (
           !user ? (

@@ -49,6 +49,8 @@ export const handleCountdown = async (path: string) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         let newTime = data.timeLeft - 1;
+        if (newTime === 0)
+          localStorage.setItem("timeStart", JSON.stringify({ time: 0 }));
 
         if (newTime < 0) {
           clearInterval(interval);

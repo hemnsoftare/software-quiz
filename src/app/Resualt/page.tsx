@@ -6,22 +6,27 @@ import Image from "next/image";
 import React from "react";
 const Leaderboard = () => {
   const { user } = useUser();
+  const storedUser = localStorage.getItem("userid");
+  const userId = storedUser ? JSON.parse(storedUser).id : null;
   const { data, isLoading } = useQuery({
-    queryKey: ["resualt"],
+    queryKey: ["users"], // Use a static key
     queryFn: async () => {
       const getuser = await getallUsers();
       const sortedUsers = getuser.sort((a, b) => b.answer - a.answer);
       const topThreeUsers = sortedUsers.slice(0, 3);
+      console.log("in query");
       return {
         users: getuser,
         Topuser: topThreeUsers,
-        currentUser: getuser.filter((item) => item.id === user?.id),
+        currentUser: getuser.filter((item) => item.id === userId),
       };
     },
+    refetchInterval: 70, // Auto refetch every 7 seconds
   });
+
   console.log(user?.id);
 
-  const isWinner = false;
+  const isWinner = data?.Topuser.some((user) => user.id === userId) ?? false;
   if (isLoading)
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -46,7 +51,7 @@ const Leaderboard = () => {
           )}
         </div>
       )}
-      <div className="bg-gradient-to-r from-purple-500 to-indigo-500 pt-4 pb-2 rounded-lg shadow-md w-full max-w-md">
+      <div className="bg-gradient-to-r from-[#4700D6] via-[#842BE3] to-[#5B31D1] pt-4 pb-2 rounded-lg shadow-md w-full max-w-md">
         <div className="flex justify-center items-end text-center text-white">
           <div className="flex flex-col items-center relative top-3 left-4 ">
             <Image
@@ -137,7 +142,7 @@ const Leaderboard = () => {
                     : "text-amber-700"
                 }`}
               >
-                {users.answer}P
+                {users.answer.toFixed(0)}P
               </span>
             </div>
           ))}
@@ -156,7 +161,9 @@ const Leaderboard = () => {
               />
               <p className="font-bold text-gray-500">Me</p>
             </div>
-            <span className="font-bold">{data?.currentUser[0].answer}P</span>
+            <span className="font-bold">
+              {data?.currentUser[0].answer.toFixed(0)}P
+            </span>
           </div>
           <p className="text-purple-700 mt-2 text-sm font-bold text-center">
             So close! Maybe bribe the WiFi next time? 😜
