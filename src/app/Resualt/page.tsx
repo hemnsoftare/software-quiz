@@ -1,13 +1,11 @@
 "use client";
 import { getallUsers } from "@/lib/user/inext";
-import { useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import React from "react";
 const Leaderboard = () => {
-  const { user } = useUser();
-  const storedUser = localStorage.getItem("userid");
-  const userId = storedUser ? JSON.parse(storedUser).id : null;
+  // const { user } = useUser();
+
   const { data, isLoading } = useQuery({
     queryKey: ["users"], // Use a static key
     queryFn: async () => {
@@ -15,18 +13,22 @@ const Leaderboard = () => {
       const sortedUsers = getuser.sort((a, b) => b.answer - a.answer);
       const topThreeUsers = sortedUsers.slice(0, 3);
       console.log("in query");
+      const storedUser = localStorage.getItem("userid");
+      const userId = storedUser ? JSON.parse(storedUser).id : null;
       return {
         users: getuser,
         Topuser: topThreeUsers,
         currentUser: getuser.filter((item) => item.id === userId),
+        userId: userId,
       };
     },
     refetchInterval: 70, // Auto refetch every 7 seconds
   });
 
-  console.log(user?.id);
+  // console.log(user?.id);
 
-  const isWinner = data?.Topuser.some((user) => user.id === userId) ?? false;
+  const isWinner =
+    data?.Topuser.some((user) => user.id === data?.userId) ?? false;
   if (isLoading)
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -119,7 +121,7 @@ const Leaderboard = () => {
             <div
               key={index}
               className={`flex items-center w-full justify-between p-2 ${
-                users.id === user?.id &&
+                users.id === data.userId &&
                 "border-4 border-gray-300 rounded-lg bg-gray-100"
               } `}
             >

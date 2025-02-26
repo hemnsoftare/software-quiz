@@ -1,6 +1,7 @@
 "use client";
 import { database } from "@/config/firebase";
 import { gettopUsers_getusercurrent, setUserAnswer } from "@/lib/user/inext";
+import { useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { get, ref } from "firebase/database";
 import Image from "next/image";
@@ -105,14 +106,13 @@ export default function QuizPage() {
   const [timeStart, setTimeStart] = useState<number>(30);
   // const intervalRef = useRef<NodeJS.Timeout | null>(null);
   // const rankingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const storedUser = localStorage.getItem("userid");
-  const userId = storedUser ? JSON.parse(storedUser).id : null;
+  const { user } = useUser();
   const router = useRouter();
   const { data, isLoading } = useQuery({
     queryKey: [currentQuestion],
     queryFn: async () => {
       if (currentQuestion === 0) return null;
-      return await gettopUsers_getusercurrent(userId);
+      return await gettopUsers_getusercurrent(user?.id || "");
     },
     enabled: showRanking, // Fetch ranking only when needed
   });
@@ -209,7 +209,7 @@ export default function QuizPage() {
 
   const handleTimeout = () => {
     setIsRevealingAnswer(true);
-    setUserAnswer({ answer: score, userid: userId || "" });
+    setUserAnswer({ answer: score, userid: user?.id || "" });
     if (currentQuestion === questions.length - 1) {
       console.log(" check ot left ");
       router.push("/Resualt");

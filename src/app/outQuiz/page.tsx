@@ -23,11 +23,11 @@ export default function OutQuiz() {
 
   return (
     <div className="min-h-screen flex items-center flex-col px-3 justify-center bg-gray-100">
-      <h1 className="text-[20px] mb-5">
+      {/* <h1 className="text-[20px] mb-5">
         {new Date().getHours() < 13
           ? "awa lo xot suk krd kurm ch 7aibt habu "
           : null}
-      </h1>
+      </h1> */}
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Warning!</h1>
         <p className="text-gray-700">
