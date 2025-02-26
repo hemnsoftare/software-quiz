@@ -18,7 +18,7 @@ export default function Home() {
     handleCountdown("start-quiz").then(() => {
       toast.success("Quiz has been started");
     });
-    redirect("/quiz");
+    // redirect("/quiz");
   };
   useEffect(() => {
     if (!user) return;

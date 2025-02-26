@@ -1,5 +1,6 @@
 import { database } from "@/config/firebase";
 import { get, ref, set, update } from "firebase/database";
+import { redirect } from "next/navigation";
 
 export interface Message {
   text: boolean;
@@ -51,7 +52,9 @@ export const handleCountdown = async (path: string) => {
         let newTime = data.timeLeft - 1;
         if (newTime === 0)
           localStorage.setItem("timeStart", JSON.stringify({ time: 0 }));
-
+        if (newTime === 29) {
+          redirect("/quiz");
+        }
         if (newTime < 0) {
           clearInterval(interval);
           newTime = 0; // Ensure it doesn't go negative
